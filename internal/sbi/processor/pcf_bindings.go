@@ -137,7 +137,7 @@ func CreatePCFBinding(c *gin.Context) {
 		PcfId:              util.PtrToString(binding.PcfId),
 		PcfSetId:           util.PtrToString(binding.PcfSetId),
 		ParaCom:            binding.ParaCom,
-		BindLevel:          (*binding.BindLevel),
+		BindLevel:          util.PtrToBindingLevel(binding.BindLevel),
 		Ipv4FrameRouteList: binding.Ipv4FrameRouteList,
 		Ipv6FrameRouteList: binding.Ipv6FrameRouteList,
 	}
@@ -253,7 +253,7 @@ func GetPCFBindings(c *gin.Context) {
 		PcfId:              util.PtrToString(binding.PcfId),
 		PcfSetId:           util.PtrToString(binding.PcfSetId),
 		ParaCom:            binding.ParaCom,
-		BindLevel:          (*binding.BindLevel),
+		BindLevel:          util.PtrToBindingLevel(binding.BindLevel),
 		Ipv4FrameRouteList: binding.Ipv4FrameRouteList,
 		Ipv6FrameRouteList: binding.Ipv6FrameRouteList,
 	}
@@ -317,7 +317,7 @@ func GetIndPCFBinding(c *gin.Context) {
 		PcfId:              util.PtrToString(binding.PcfId),
 		PcfSetId:           util.PtrToString(binding.PcfSetId),
 		ParaCom:            binding.ParaCom,
-		BindLevel:          (*binding.BindLevel),
+		BindLevel:          util.PtrToBindingLevel(binding.BindLevel),
 		Ipv4FrameRouteList: binding.Ipv4FrameRouteList,
 		Ipv6FrameRouteList: binding.Ipv6FrameRouteList,
 	}
@@ -456,7 +456,7 @@ func UpdateIndPCFBinding(c *gin.Context) {
 		PcfId:              util.PtrToString(binding.PcfId),
 		PcfSetId:           util.PtrToString(binding.PcfSetId),
 		ParaCom:            binding.ParaCom,
-		BindLevel:          (*binding.BindLevel),
+		BindLevel:          util.PtrToBindingLevel(binding.BindLevel),
 		Ipv4FrameRouteList: binding.Ipv4FrameRouteList,
 		Ipv6FrameRouteList: binding.Ipv6FrameRouteList,
 	}
