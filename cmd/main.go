@@ -1,13 +1,3 @@
-/*
- * Nbsf_Management Service API
- *
- * Binding Support Management Service API.
- * © 2025, 3GPP Organizational Partners (ARIB, ATIS, CCSA, ETSI, TSDSI, TTA, TTC).
- * All rights reserved.
- *
- * API version: 1.5.0
- */
-
 package main
 
 import (
@@ -65,7 +55,6 @@ func action(cliCtx *cli.Context) error {
 		return err
 	}
 
-	logger.MainLog.Infoln(cliCtx.App.Name)
 	logger.MainLog.Infoln("BSF version: ", version.GetVersion())
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -73,29 +62,22 @@ func action(cliCtx *cli.Context) error {
 	signal.Notify(sigCh, os.Interrupt, syscall.SIGTERM)
 
 	go func() {
-		<-sigCh  // Wait for interrupt signal to gracefully shutdown BSF
+		<-sigCh  // Wait for interrupt signal to gracefully shutdown
 		cancel() // Notify each goroutine and wait them stopped
-		if BSF != nil {
-			BSF.Terminate()
-		}
 	}()
 
 	cfg, err := factory.ReadConfig(cliCtx.String("config"))
 	if err != nil {
-		sigCh <- nil
 		return err
 	}
 	factory.BsfConfig = cfg
 
 	bsf, err := service.NewApp(ctx, cfg, tlsKeyLogPath)
 	if err != nil {
-		sigCh <- nil
 		return err
 	}
 	BSF = bsf
-	if bsf == nil {
-		logger.MainLog.Infoln("bsf is nil")
-	}
+
 	bsf.Start()
 
 	return nil
