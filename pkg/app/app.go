@@ -196,50 +196,76 @@ func (a *App) Start() {
 	}
 	a.server = server
 
-	switch a.config.Configuration.Sbi.Scheme {
-	case "http":
-		err := server.ListenAndServe()
-		if err != nil {
-			logger.MainLog.Errorf("BSF Listen failed: %+v", err)
+	// Start server in goroutine so we can monitor context cancellation
+	serverErr := make(chan error, 1)
+	go func() {
+		var err error
+		switch a.config.Configuration.Sbi.Scheme {
+		case "http":
+			err = server.ListenAndServe()
+		case "https":
+			err = server.ListenAndServeTLS(
+				a.config.Configuration.Sbi.Tls.Pem,
+				a.config.Configuration.Sbi.Tls.Key,
+			)
+		default:
+			err = fmt.Errorf("unsupported scheme: %s", a.config.Configuration.Sbi.Scheme)
 		}
-		return
-	case "https":
-		err := server.ListenAndServeTLS(
-			a.config.Configuration.Sbi.Tls.Pem,
-			a.config.Configuration.Sbi.Tls.Key,
-		)
-		if err != nil {
-			logger.MainLog.Errorf("BSF Listen failed: %+v", err)
+		if err != nil && err != http.ErrServerClosed {
+			logger.MainLog.Errorf("BSF server error: %+v", err)
+			serverErr <- err
 		}
-		return
-	}
+	}()
 
-	logger.MainLog.Errorf("unsupported scheme: %s", a.config.Configuration.Sbi.Scheme)
+	// Wait for context cancellation or server error
+	select {
+	case <-a.ctx.Done():
+		logger.MainLog.Info("Context cancelled, shutting down BSF...")
+		// Call Terminate to clean up resources
+		if err := a.Terminate(); err != nil {
+			logger.MainLog.Errorf("Error during termination: %+v", err)
+		}
+		logger.MainLog.Info("BSF shutdown complete")
+	case err := <-serverErr:
+		logger.MainLog.Errorf("Server failed: %+v", err)
+	}
 }
 
 func (a *App) Terminate() error {
 	logger.MainLog.Infof("Terminating BSF...")
 
 	// Deregister from NRF using consumer
-	if err := a.consumer.DeregisterWithNRF(); err != nil {
-		logger.MainLog.Errorf("BSF deregister from NRF Error: %+v", err)
-		// Don't return error here as termination should continue
-	}
-
-	// Stop cleanup routine
-	a.bsfCtx.StopCleanupRoutine()
-
-	// Shutdown sbi server if running
-	if a.server != nil {
-		if err := a.server.Shutdown(a.ctx); err != nil {
-			logger.MainLog.Errorf("Error shutting down SBI server: %+v", err)
+	if a.consumer != nil {
+		if err := a.consumer.DeregisterWithNRF(); err != nil {
+			logger.MainLog.Errorf("BSF deregister from NRF Error: %+v", err)
+			// Don't return error here as termination should continue
 		}
 	}
 
-	// Disconnect from MongoDB
-	if err := a.bsfCtx.DisconnectMongoDB(); err != nil {
-		logger.MainLog.Errorf("Error disconnecting from MongoDB: %+v", err)
+	// Stop cleanup routine
+	if a.bsfCtx != nil {
+		a.bsfCtx.StopCleanupRoutine()
 	}
 
+	// Shutdown sbi server if running
+	if a.server != nil {
+		// Use a separate context with timeout for shutdown
+		shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer shutdownCancel()
+
+		if err := a.server.Shutdown(shutdownCtx); err != nil {
+			logger.MainLog.Errorf("Error shutting down SBI server: %+v", err)
+		}
+		a.server = nil // Mark as shutdown to prevent double shutdown
+	}
+
+	// Disconnect from MongoDB
+	if a.bsfCtx != nil {
+		if err := a.bsfCtx.DisconnectMongoDB(); err != nil {
+			logger.MainLog.Errorf("Error disconnecting from MongoDB: %+v", err)
+		}
+	}
+
+	logger.MainLog.Info("BSF termination complete")
 	return nil
 }
