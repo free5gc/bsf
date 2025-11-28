@@ -77,11 +77,12 @@ type BSFContext struct {
 	Subscriptions    map[string]*BsfSubscription // subId -> BsfSubscription
 
 	// Lifecycle management
-	DefaultBindingTTL time.Duration // Default TTL for new bindings
-	CleanupInterval   time.Duration // How often to run cleanup
-	MaxInactiveTime   time.Duration // Max time without access before cleanup
-	CleanupTicker     *time.Ticker  // Ticker for periodic cleanup
-	ShutdownChannel   chan bool     // Channel for graceful shutdown
+	DefaultBindingTTL time.Duration  // Default TTL for new bindings
+	CleanupInterval   time.Duration  // How often to run cleanup
+	MaxInactiveTime   time.Duration  // Max time without access before cleanup
+	CleanupTicker     *time.Ticker   // Ticker for periodic cleanup
+	ShutdownChannel   chan bool      // Channel for graceful shutdown
+	cleanupWg         sync.WaitGroup // WaitGroup for cleanup goroutine
 }
 
 type PcfBinding struct {
@@ -484,8 +485,10 @@ func (c *BSFContext) StartCleanupRoutine() {
 	logger.CtxLog.Infof("Starting PCF binding cleanup routine (interval: %v)", c.CleanupInterval)
 
 	c.CleanupTicker = time.NewTicker(c.CleanupInterval)
+	c.cleanupWg.Add(1)
 
 	go func() {
+		defer c.cleanupWg.Done()
 		for {
 			select {
 			case <-c.CleanupTicker.C:
@@ -499,12 +502,32 @@ func (c *BSFContext) StartCleanupRoutine() {
 	}()
 }
 
-// StopCleanupRoutine stops the cleanup routine
+// StopCleanupRoutine stops the cleanup routine and waits for it to exit
 func (c *BSFContext) StopCleanupRoutine() {
 	if c.CleanupTicker != nil {
+		logger.CtxLog.Info("Sending shutdown signal to cleanup routine")
+
+		// Send shutdown signal with timeout
 		select {
 		case c.ShutdownChannel <- true:
-		default:
+			logger.CtxLog.Debug("Shutdown signal sent successfully")
+		case <-time.After(1 * time.Second):
+			logger.CtxLog.Warn("Timeout sending shutdown signal, forcing ticker stop")
+			c.CleanupTicker.Stop()
+		}
+
+		// Wait for cleanup goroutine to exit with timeout
+		done := make(chan struct{})
+		go func() {
+			c.cleanupWg.Wait()
+			close(done)
+		}()
+
+		select {
+		case <-done:
+			logger.CtxLog.Info("Cleanup routine stopped successfully")
+		case <-time.After(5 * time.Second):
+			logger.CtxLog.Warn("Timeout waiting for cleanup routine to stop")
 		}
 	}
 }
