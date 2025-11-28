@@ -1,4 +1,4 @@
-package service
+package service_test
 
 import (
 	"context"
@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/free5gc/bsf/pkg/factory"
+	"github.com/free5gc/bsf/pkg/service"
 )
 
 func TestNewApp(t *testing.T) {
@@ -25,7 +26,7 @@ func TestNewApp(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	app, err := NewApp(ctx, cfg, "")
+	app, err := service.NewApp(ctx, cfg, "")
 	if err != nil {
 		t.Fatalf("Failed to create app: %v", err)
 	}
@@ -75,7 +76,9 @@ func TestAppStartTerminate(t *testing.T) {
 	factory.BsfConfig = cfg
 
 	ctx, cancel := context.WithCancel(context.Background())
-	app, err := NewApp(ctx, cfg, "")
+	defer cancel() // Ensure cancel is called on all paths
+
+	app, err := service.NewApp(ctx, cfg, "")
 	if err != nil {
 		t.Fatalf("Failed to create app: %v", err)
 	}
@@ -103,7 +106,6 @@ func TestAppStartTerminate(t *testing.T) {
 			t.Errorf("App took too long to stop: %v", duration)
 		}
 	case <-time.After(20 * time.Second):
-		cancel() // Force cancel if still hanging
 		t.Fatal("App did not stop within 20 seconds")
 	}
 }
@@ -125,13 +127,13 @@ func TestAppInterface(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	app, err := NewApp(ctx, cfg, "")
+	app, err := service.NewApp(ctx, cfg, "")
 	if err != nil {
 		t.Fatalf("Failed to create app: %v", err)
 	}
 
 	// Test that BsfApp implements BsfAppInterface
-	var _ BsfAppInterface = app
+	var _ service.BsfAppInterface = app
 
 	// Test log functions don't panic
 	app.SetLogEnable(false)
