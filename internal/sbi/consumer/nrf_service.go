@@ -61,17 +61,35 @@ func SendRegisterNFInstance(ctx context.Context) (*models.NrfNfManagementNfProfi
 		if res.Location == "" {
 			// NFUpdate
 			logger.ConsLog.Infof("BSF registration to NRF updated")
-			return &res.NrfNfManagementNfProfile, nil
 		} else {
 			// NFRegister
 			resourceUri := res.Location
 			logger.ConsLog.Infof("BSF registration to NRF successful, resource: %s", resourceUri)
-			return &res.NrfNfManagementNfProfile, nil
 		}
+
+		nf := res.NrfNfManagementNfProfile
+		oauth2 := false
+		if nf.CustomInfo != nil {
+			v, ok := nf.CustomInfo["oauth2"].(bool)
+			if ok {
+				oauth2 = v
+				logger.ConsLog.Infof("OAuth2 setting receive from NRF: %v", oauth2)
+			}
+		}
+		bsfContext.BsfSelf.OAuth2Required = oauth2
+		if oauth2 && bsfContext.BsfSelf.NrfCertPem == "" {
+			logger.ConsLog.Error("OAuth2 enable but no nrfCertPem provided in config.")
+		}
+		return &res.NrfNfManagementNfProfile, nil
 	}
 }
 
 func SendDeregisterNFInstance() (*models.ProblemDetails, error) {
+	ctx, pd, err := bsfContext.BsfSelf.GetTokenCtx(models.ServiceName_NNRF_NFM, models.NrfNfManagementNfType_NRF)
+	if err != nil {
+		return pd, err
+	}
+
 	// Set client and set url
 	configuration := Nnrf_NFManagement.NewConfiguration()
 	configuration.SetBasePath(bsfContext.BsfSelf.NrfUri)
@@ -81,7 +99,7 @@ func SendDeregisterNFInstance() (*models.ProblemDetails, error) {
 		NfInstanceID: &bsfContext.BsfSelf.NfId,
 	}
 
-	_, err := client.NFInstanceIDDocumentApi.DeregisterNFInstance(context.TODO(), request)
+	_, err = client.NFInstanceIDDocumentApi.DeregisterNFInstance(ctx, request)
 	if err != nil {
 		logger.ConsLog.Warnf("BSF deregistration from NRF failed[%v]", err)
 		return nil, err
