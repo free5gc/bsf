@@ -26,6 +26,7 @@ var (
 	ProcLog  *logrus.Entry
 	ConsLog  *logrus.Entry
 	MongoLog *logrus.Entry
+	UtilLog  *logrus.Entry
 )
 
 func init() {
@@ -44,4 +45,5 @@ func init() {
 	ProcLog = NfLog.WithField(logger_util.FieldCategory, "Proc")
 	ConsLog = NfLog.WithField(logger_util.FieldCategory, "Cons")
 	MongoLog = NfLog.WithField(logger_util.FieldCategory, "MongoDB")
+	UtilLog  = NfLog.WithField(logger_util.FieldCategory, "Util")
 }

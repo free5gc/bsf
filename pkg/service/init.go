@@ -217,10 +217,12 @@ func (a *BsfApp) Start() {
 
 	// Register with NRF - moved to consumer
 	go func() {
-		if err := a.consumer.RegisterWithNRF(a.ctx); err != nil {
+		_, nfId, err := a.Consumer().SendRegisterNFInstance(a.ctx)
+		if err != nil {
 			logger.MainLog.Errorf("BSF register to NRF Error: %+v", err)
 		} else {
 			logger.MainLog.Infof("BSF successfully registered with NRF")
+			a.bsfCtx.NfId = nfId
 		}
 	}()
 
@@ -370,7 +372,8 @@ func (a *BsfApp) terminateProcedure() {
 
 	// Deregister from NRF using consumer
 	if a.consumer != nil {
-		if err := a.consumer.DeregisterWithNRF(); err != nil {
+		_, err := a.Consumer().SendDeregisterNFInstance()
+		if err != nil {
 			logger.MainLog.Errorf("BSF deregister from NRF Error: %+v", err)
 			// Don't return error here as termination should continue
 		} else {
