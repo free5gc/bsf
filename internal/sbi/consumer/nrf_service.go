@@ -57,6 +57,20 @@ func SendRegisterNFInstance(ctx context.Context) (*models.NrfNfManagementNfProfi
 			continue
 		}
 
+		// Set OAuth2 requirement from NRF response
+		oauth2 := false
+		if res.NrfNfManagementNfProfile.CustomInfo != nil {
+			v, ok := res.NrfNfManagementNfProfile.CustomInfo["oauth2"].(bool)
+			if ok {
+				oauth2 = v
+				logger.ConsLog.Infoln("OAuth2 setting receive from NRF:", oauth2)
+			}
+		}
+		bsfContext.BsfSelf.OAuth2Required = oauth2
+		if oauth2 && bsfContext.BsfSelf.NrfCertPem == "" {
+			logger.ConsLog.Error("OAuth2 enable but no nrfCertPem provided in config.")
+		}
+
 		// Check if NFUpdate (no Location header) or NFRegister (has Location header)
 		if res.Location == "" {
 			// NFUpdate
