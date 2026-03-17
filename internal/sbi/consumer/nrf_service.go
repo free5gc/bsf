@@ -103,8 +103,7 @@ func (s *nnrfService) BuildNFProfile() models.NrfNfManagementNfProfile {
 	return bsfContext.BsfSelf.GetBsfProfile()
 }
 
-func (s *nnrfService) SendRegisterNFInstance(ctx context.Context) (
-	*models.NrfNfManagementNfProfile, string, error) {
+func (s *nnrfService) SendRegisterNFInstance(ctx context.Context) (*models.NrfNfManagementNfProfile, string, error) {
 	bsfCtx := s.consumer.Context()
 
 	client := s.getNFManagementClient(bsfCtx.NrfUri)

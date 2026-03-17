@@ -45,5 +45,5 @@ func init() {
 	ProcLog = NfLog.WithField(logger_util.FieldCategory, "Proc")
 	ConsLog = NfLog.WithField(logger_util.FieldCategory, "Cons")
 	MongoLog = NfLog.WithField(logger_util.FieldCategory, "MongoDB")
-	UtilLog  = NfLog.WithField(logger_util.FieldCategory, "Util")
+	UtilLog = NfLog.WithField(logger_util.FieldCategory, "Util")
 }
