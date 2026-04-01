@@ -92,7 +92,7 @@ func ReplaceIndividualSubcription(c *gin.Context) {
 		SuppFeat:          util.StringToPtr(request.SuppFeat),
 	}
 
-	if (!exists) {
+	if !exists {
 		problemDetail := models.ProblemDetails{
 			Status: http.StatusNotFound,
 			Cause:  "RESOURCE_NOT_FOUND",
