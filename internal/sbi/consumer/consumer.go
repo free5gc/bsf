@@ -5,6 +5,8 @@ import (
 
 	bsfContext "github.com/free5gc/bsf/internal/context"
 	"github.com/free5gc/bsf/pkg/factory"
+	Nnrf_NFDiscovery "github.com/free5gc/openapi/nrf/NFDiscovery"
+	Nnrf_NFManagement "github.com/free5gc/openapi/nrf/NFManagement"
 )
 
 var consumer *Consumer
@@ -22,10 +24,6 @@ type Consumer struct {
 	*nnrfService
 }
 
-type nnrfService struct {
-	consumer *Consumer
-}
-
 func GetConsumer() *Consumer {
 	return consumer
 }
@@ -36,21 +34,11 @@ func NewConsumer(bsf ConsumerBsf) (*Consumer, error) {
 	}
 
 	c.nnrfService = &nnrfService{
-		consumer: c,
+		consumer:        c,
+		nfMngmntClients: make(map[string]*Nnrf_NFManagement.APIClient),
+		nfDiscClients:   make(map[string]*Nnrf_NFDiscovery.APIClient),
 	}
 
 	consumer = c
 	return c, nil
-}
-
-// RegisterWithNRF calls the existing NRF service registration function
-func (c *Consumer) RegisterWithNRF(ctx context.Context) error {
-	_, err := SendRegisterNFInstance(ctx)
-	return err
-}
-
-// DeregisterWithNRF calls the existing NRF service deregistration function
-func (c *Consumer) DeregisterWithNRF() error {
-	_, err := SendDeregisterNFInstance()
-	return err
 }
