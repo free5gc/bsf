@@ -222,7 +222,11 @@ func (a *BsfApp) Start() {
 			logger.MainLog.Errorf("BSF register to NRF Error: %+v", err)
 		} else {
 			logger.MainLog.Infof("BSF successfully registered with NRF")
-			a.bsfCtx.NfId = nfId
+			if nfId != "" {
+				a.bsfCtx.NfId = nfId
+			} else {
+				logger.MainLog.Warnf("BSF registered with NRF but received empty NF ID")
+			}
 		}
 	}()
 
