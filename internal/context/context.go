@@ -492,7 +492,14 @@ func (c *BSFContext) StartCleanupRoutine() {
 		for {
 			select {
 			case <-c.CleanupTicker.C:
-				c.CleanupExpiredBindings()
+				func() {
+					defer func() {
+						if r := recover(); r != nil {
+							logger.CtxLog.Errorf("Panic in cleanup: %v", r)
+						}
+					}()
+					c.CleanupExpiredBindings()
+				}()
 			case <-c.ShutdownChannel:
 				logger.CtxLog.Info("Stopping PCF binding cleanup routine")
 				c.CleanupTicker.Stop()
@@ -538,7 +545,10 @@ func (c *BSFContext) CleanupExpiredBindings() {
 
 	now := time.Now()
 	expiredBindings := []string{}
-	inactiveBindings := []string{}
+	inactiveBindings := []struct {
+		bindingId     string
+		lastAccessAge time.Duration
+	}{}
 
 	c.mutex.RLock()
 	for bindingId, binding := range c.PcfBindings {
@@ -550,7 +560,13 @@ func (c *BSFContext) CleanupExpiredBindings() {
 
 		// Check last access time for inactive bindings
 		if now.Sub(binding.LastAccessTime) > c.MaxInactiveTime {
-			inactiveBindings = append(inactiveBindings, bindingId)
+			inactiveBindings = append(inactiveBindings, struct {
+				bindingId     string
+				lastAccessAge time.Duration
+			}{
+				bindingId:     bindingId,
+				lastAccessAge: now.Sub(binding.LastAccessTime),
+			})
 		}
 	}
 	c.mutex.RUnlock()
@@ -561,11 +577,11 @@ func (c *BSFContext) CleanupExpiredBindings() {
 		c.DeletePcfBinding(bindingId)
 	}
 
-	// Delete inactive bindings
-	for _, bindingId := range inactiveBindings {
+	// Delete inactive bindings (logging info captured while lock was held)
+	for _, item := range inactiveBindings {
 		logger.CtxLog.Infof("Deleting inactive PCF binding: %s (last access: %v ago)",
-			bindingId, now.Sub(c.PcfBindings[bindingId].LastAccessTime))
-		c.DeletePcfBinding(bindingId)
+			item.bindingId, item.lastAccessAge)
+		c.DeletePcfBinding(item.bindingId)
 	}
 
 	if len(expiredBindings) > 0 || len(inactiveBindings) > 0 {
