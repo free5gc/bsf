@@ -18,12 +18,19 @@ import (
 	"github.com/free5gc/bsf/internal/logger"
 	"github.com/free5gc/bsf/pkg/factory"
 	"github.com/free5gc/openapi/models"
+	"github.com/free5gc/openapi/oauth"
 )
 
 var (
 	bsfContext = BSFContext{}
 	BsfSelf    = &bsfContext
 )
+
+type NFContext interface {
+	AuthorizationCheck(token string, serviceName models.ServiceName) error
+}
+
+var _ NFContext = &BSFContext{}
 
 // MongoDB collection names
 const (
@@ -55,14 +62,16 @@ func init() {
 }
 
 type BSFContext struct {
-	mutex        sync.RWMutex
-	NfId         string
-	Name         string
-	UriScheme    string
-	RegisterIPv4 string
-	SBIPort      int
-	BindingIPv4  string
-	NrfUri       string
+	mutex          sync.RWMutex
+	NfId           string
+	Name           string
+	UriScheme      string
+	RegisterIPv4   string
+	SBIPort        int
+	BindingIPv4    string
+	NrfUri         string
+	NrfCertPem     string
+	OAuth2Required bool
 
 	// MongoDB
 	MongoDBName   string
@@ -159,6 +168,26 @@ func (c *BSFContext) GetSelf() *BSFContext {
 	return &bsfContext
 }
 
+func (c *BSFContext) GetTokenCtx(serviceName models.ServiceName, targetNF models.NrfNfManagementNfType) (
+	context.Context, *models.ProblemDetails, error,
+) {
+	if !c.OAuth2Required {
+		return context.TODO(), nil, nil
+	}
+	return oauth.GetTokenCtx(models.NrfNfManagementNfType_BSF, targetNF,
+		c.NfId, c.NrfUri, string(serviceName))
+}
+
+func (c *BSFContext) AuthorizationCheck(token string, serviceName models.ServiceName) error {
+	if !c.OAuth2Required {
+		logger.CtxLog.Debugf("BSFContext::AuthorizationCheck: OAuth2 not required")
+		return nil
+	}
+
+	logger.CtxLog.Debugf("BSFContext::AuthorizationCheck: token[%s] serviceName[%s]", token, serviceName)
+	return oauth.VerifyOAuth(token, string(serviceName), c.NrfCertPem)
+}
+
 func InitBsfContext() {
 	config := factory.BsfConfig
 	if config == nil {
@@ -187,6 +216,9 @@ func InitBsfContext() {
 	} else {
 		logger.CtxLog.Warn("NRF Uri is empty! BSF will not register to NRF")
 	}
+
+	BsfSelf.NrfCertPem = configuration.NrfCertPem
+	BsfSelf.OAuth2Required = false
 
 	if configuration.MongoDB == nil {
 		logger.CtxLog.Warn("MongoDB is nil")
