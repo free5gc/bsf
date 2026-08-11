@@ -86,31 +86,31 @@ type BSFContext struct {
 }
 
 type PcfBinding struct {
-	BindingId          string                       `bson:"_id,omitempty"`
-	Supi               *string                      `bson:"supi,omitempty"`
-	Gpsi               *string                      `bson:"gpsi,omitempty"`
-	Ipv4Addr           *string                      `bson:"ipv4_addr,omitempty"`
-	Ipv6Prefix         *string                      `bson:"ipv6_prefix,omitempty"`
-	AddIpv6Prefixes    []string                     `bson:"add_ipv6_prefixes,omitempty"`
-	IpDomain           *string                      `bson:"ip_domain,omitempty"`
-	MacAddr48          *string                      `bson:"mac_addr48,omitempty"`
-	AddMacAddrs        []string                     `bson:"add_mac_addrs,omitempty"`
-	Dnn                string                       `bson:"dnn"`
-	PcfFqdn            *string                      `bson:"pcf_fqdn,omitempty"`
-	PcfIpEndPoints     []models.IpEndPoint          `bson:"pcf_ip_endpoints,omitempty"`
-	PcfDiamHost        *string                      `bson:"pcf_diam_host,omitempty"`
-	PcfDiamRealm       *string                      `bson:"pcf_diam_realm,omitempty"`
-	PcfSmFqdn          *string                      `bson:"pcf_sm_fqdn,omitempty"`
-	PcfSmIpEndPoints   []models.IpEndPoint          `bson:"pcf_sm_ip_endpoints,omitempty"`
-	Snssai             *models.Snssai               `bson:"snssai,omitempty"`
-	SuppFeat           *string                      `bson:"supp_feat,omitempty"`
-	PcfId              *string                      `bson:"pcf_id,omitempty"`
-	PcfSetId           *string                      `bson:"pcf_set_id,omitempty"`
-	RecoveryTime       *time.Time                   `bson:"recovery_time,omitempty"`
-	ParaCom            *models.ParameterCombination `bson:"para_com,omitempty"`
-	BindLevel          *models.BindingLevel         `bson:"bind_level,omitempty"`
-	Ipv4FrameRouteList []string                     `bson:"ipv4_frame_route_list,omitempty"`
-	Ipv6FrameRouteList []string                     `bson:"ipv6_frame_route_list,omitempty"`
+	BindingId          string                                `bson:"_id,omitempty"`
+	Supi               *string                               `bson:"supi,omitempty"`
+	Gpsi               *string                               `bson:"gpsi,omitempty"`
+	Ipv4Addr           *string                               `bson:"ipv4_addr,omitempty"`
+	Ipv6Prefix         *string                               `bson:"ipv6_prefix,omitempty"`
+	AddIpv6Prefixes    []string                              `bson:"add_ipv6_prefixes,omitempty"`
+	IpDomain           *string                               `bson:"ip_domain,omitempty"`
+	MacAddr48          *string                               `bson:"mac_addr48,omitempty"`
+	AddMacAddrs        []string                              `bson:"add_mac_addrs,omitempty"`
+	Dnn                string                                `bson:"dnn"`
+	PcfFqdn            *string                               `bson:"pcf_fqdn,omitempty"`
+	PcfIpEndPoints     []models.Nrf_NFMgmt_IpEndPoint        `bson:"pcf_ip_endpoints,omitempty"`
+	PcfDiamHost        *string                               `bson:"pcf_diam_host,omitempty"`
+	PcfDiamRealm       *string                               `bson:"pcf_diam_realm,omitempty"`
+	PcfSmFqdn          *string                               `bson:"pcf_sm_fqdn,omitempty"`
+	PcfSmIpEndPoints   []models.Nrf_NFMgmt_IpEndPoint        `bson:"pcf_sm_ip_endpoints,omitempty"`
+	Snssai             *models.Snssai                        `bson:"snssai,omitempty"`
+	SuppFeat           *string                               `bson:"supp_feat,omitempty"`
+	PcfId              *string                               `bson:"pcf_id,omitempty"`
+	PcfSetId           *string                               `bson:"pcf_set_id,omitempty"`
+	RecoveryTime       *time.Time                            `bson:"recovery_time,omitempty"`
+	ParaCom            *models.Bsf_Mgmt_ParameterCombination `bson:"para_com,omitempty"`
+	BindLevel          *models.Bsf_Mgmt_BindingLevel         `bson:"bind_level,omitempty"`
+	Ipv4FrameRouteList []string                              `bson:"ipv4_frame_route_list,omitempty"`
+	Ipv6FrameRouteList []string                              `bson:"ipv6_frame_route_list,omitempty"`
 
 	// Lifecycle management fields
 	CreatedTime    time.Time  `bson:"created_time"`
@@ -124,10 +124,10 @@ type PcfForUeBinding struct {
 	Supi                string
 	Gpsi                *string
 	PcfForUeFqdn        *string
-	PcfForUeIpEndPoints []models.IpEndPoint
+	PcfForUeIpEndPoints []models.Nrf_NFMgmt_IpEndPoint
 	PcfId               *string
 	PcfSetId            *string
-	BindLevel           *models.BindingLevel
+	BindLevel           *models.Bsf_Mgmt_BindingLevel
 	SuppFeat            *string
 }
 
@@ -135,23 +135,23 @@ type PcfMbsBinding struct {
 	BindingId      string
 	MbsSessionId   *models.MbsSessionId
 	PcfFqdn        *string
-	PcfIpEndPoints []models.IpEndPoint
+	PcfIpEndPoints []models.Nrf_NFMgmt_IpEndPoint
 	PcfId          *string
 	PcfSetId       *string
-	BindLevel      *models.BindingLevel
+	BindLevel      *models.Bsf_Mgmt_BindingLevel
 	RecoveryTime   *time.Time
 	SuppFeat       *string
 }
 
 type BsfSubscription struct {
 	SubId             string
-	Events            []models.BsfEvent
+	Events            []models.Bsf_Mgmt_BsfEvent
 	NotifUri          string
 	NotifCorreId      string
 	Supi              string
 	Gpsi              *string
-	SnssaiDnnPairs    *models.SnssaiDnnPair
-	AddSnssaiDnnPairs []models.SnssaiDnnPair
+	SnssaiDnnPairs    *models.Bsf_Mgmt_SnssaiDnnPair
+	AddSnssaiDnnPairs []models.Bsf_Mgmt_SnssaiDnnPair
 	SuppFeat          *string
 }
 
@@ -954,26 +954,26 @@ func mbsSessionIdEquals(id1, id2 *models.MbsSessionId) bool {
 }
 
 // Get BSF NF Profile
-func (c *BSFContext) GetBsfProfile() models.NrfNfManagementNfProfile {
-	nfProfile := models.NrfNfManagementNfProfile{
+func (c *BSFContext) GetBsfProfile() models.Nrf_NFMgmt_NFProfile {
+	nfProfile := models.Nrf_NFMgmt_NFProfile{
 		NfInstanceId:  c.NfId,
-		NfType:        models.NrfNfManagementNfType_BSF,
-		NfStatus:      models.NrfNfManagementNfStatus_REGISTERED,
+		NfType:        models.Nrf_NFMgmt_NFType_BSF,
+		NfStatus:      models.Nrf_NFMgmt_NFStatus_REGISTERED,
 		PlmnList:      []models.PlmnId{{Mcc: "208", Mnc: "93"}}, // Default PLMN
 		Ipv4Addresses: []string{c.RegisterIPv4},
-		NfServices:    []models.NrfNfManagementNfService{},
+		NfServices:    []models.Nrf_NFMgmt_NFService{},
 	}
 
-	bsfMgmtService := models.NrfNfManagementNfService{
+	bsfMgmtService := models.Nrf_NFMgmt_NFService{
 		ServiceInstanceId: uuid.New().String(),
-		ServiceName:       models.ServiceName_NBSF_MANAGEMENT,
-		Versions: []models.NfServiceVersion{{
+		ServiceName:       models.Nrf_NFMgmt_ServiceName_NBSF_MANAGEMENT,
+		Versions: []models.Nrf_NFMgmt_NFServiceVersion{{
 			ApiVersionInUri: "v1",
 			ApiFullVersion:  "1.5.0",
 		}},
 		Scheme:          models.UriScheme(c.UriScheme),
-		NfServiceStatus: models.NfServiceStatus_REGISTERED,
-		IpEndPoints: []models.IpEndPoint{{
+		NfServiceStatus: models.Nrf_NFMgmt_NFServiceStatus_REGISTERED,
+		IpEndPoints: []models.Nrf_NFMgmt_IpEndPoint{{
 			Ipv4Address: c.RegisterIPv4,
 			Port:        int32(c.SBIPort),
 		}},

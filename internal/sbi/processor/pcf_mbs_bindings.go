@@ -21,7 +21,7 @@ import (
 func CreatePCFMbsBinding(c *gin.Context) {
 	logger.ProcLog.Infof("Handle CreatePCFMbsBinding")
 
-	var request models.PcfMbsBinding
+	var request models.Bsf_Mgmt_PcfMbsBinding
 	if err := c.ShouldBindJSON(&request); err != nil {
 		problemDetail := models.ProblemDetails{
 			Status: http.StatusBadRequest,
@@ -70,7 +70,7 @@ func CreatePCFMbsBinding(c *gin.Context) {
 	)
 
 	// Convert back to response format
-	response := models.PcfMbsBinding{
+	response := models.Bsf_Mgmt_PcfMbsBinding{
 		MbsSessionId:   binding.MbsSessionId,
 		PcfFqdn:        util.PtrToString(binding.PcfFqdn),
 		PcfIpEndPoints: binding.PcfIpEndPoints,
@@ -133,14 +133,14 @@ func GetPCFMbsBinding(c *gin.Context) {
 	}
 
 	if len(bindings) == 0 {
-		c.JSON(http.StatusOK, []models.PcfMbsBinding{})
+		c.JSON(http.StatusOK, []models.Bsf_Mgmt_PcfMbsBinding{})
 		return
 	}
 
 	// Convert to response format
-	var response []models.PcfMbsBinding
+	var response []models.Bsf_Mgmt_PcfMbsBinding
 	for _, binding := range bindings {
-		mbsBinding := models.PcfMbsBinding{
+		mbsBinding := models.Bsf_Mgmt_PcfMbsBinding{
 			MbsSessionId:   binding.MbsSessionId,
 			PcfFqdn:        util.PtrToString(binding.PcfFqdn),
 			PcfIpEndPoints: binding.PcfIpEndPoints,
@@ -166,7 +166,7 @@ func ModifyIndPCFMbsBinding(c *gin.Context) {
 
 	bindingId := c.Param("bindingId")
 
-	var patchRequest models.PcfMbsBindingPatch
+	var patchRequest models.Bsf_Mgmt_PcfMbsBindingPatch
 	if err := c.ShouldBindJSON(&patchRequest); err != nil {
 		problemDetail := models.ProblemDetails{
 			Status: http.StatusBadRequest,
@@ -213,7 +213,7 @@ func ModifyIndPCFMbsBinding(c *gin.Context) {
 	)
 
 	// Return updated binding
-	response := models.PcfMbsBinding{
+	response := models.Bsf_Mgmt_PcfMbsBinding{
 		MbsSessionId:   binding.MbsSessionId,
 		PcfFqdn:        util.PtrToString(binding.PcfFqdn),
 		PcfIpEndPoints: binding.PcfIpEndPoints,
