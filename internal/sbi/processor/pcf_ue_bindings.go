@@ -20,7 +20,7 @@ import (
 func CreatePCFforUEBinding(c *gin.Context) {
 	logger.ProcLog.Infof("Handle CreatePCFforUEBinding")
 
-	var request models.PcfForUeBinding
+	var request models.Bsf_Mgmt_PcfForUeBinding
 	if err := c.ShouldBindJSON(&request); err != nil {
 		problemDetail := models.ProblemDetails{
 			Status: http.StatusBadRequest,
@@ -54,7 +54,7 @@ func CreatePCFforUEBinding(c *gin.Context) {
 	)
 
 	// Convert back to response format
-	response := models.PcfForUeBinding{
+	response := models.Bsf_Mgmt_PcfForUeBinding{
 		Supi:                binding.Supi,
 		Gpsi:                util.PtrToString(binding.Gpsi),
 		PcfForUeFqdn:        util.PtrToString(binding.PcfForUeFqdn),
@@ -97,14 +97,14 @@ func GetPCFForUeBindings(c *gin.Context) {
 	}
 
 	if len(bindings) == 0 {
-		c.JSON(http.StatusOK, []models.PcfForUeBinding{})
+		c.JSON(http.StatusOK, []models.Bsf_Mgmt_PcfForUeBinding{})
 		return
 	}
 
 	// Convert to response format
-	var response []models.PcfForUeBinding
+	var response []models.Bsf_Mgmt_PcfForUeBinding
 	for _, binding := range bindings {
-		response = append(response, models.PcfForUeBinding{
+		response = append(response, models.Bsf_Mgmt_PcfForUeBinding{
 			Supi:                binding.Supi,
 			Gpsi:                util.PtrToString(binding.Gpsi),
 			PcfForUeFqdn:        util.PtrToString(binding.PcfForUeFqdn),
@@ -154,7 +154,7 @@ func UpdateIndPCFforUEBinding(c *gin.Context) {
 
 	bindingId := c.Param("bindingId")
 
-	var patchRequest models.PcfForUeBindingPatch
+	var patchRequest models.Bsf_Mgmt_PcfForUeBindingPatch
 	if err := c.ShouldBindJSON(&patchRequest); err != nil {
 		problemDetail := models.ProblemDetails{
 			Status: http.StatusBadRequest,
@@ -201,7 +201,7 @@ func UpdateIndPCFforUEBinding(c *gin.Context) {
 	)
 
 	// Return updated binding
-	response := models.PcfForUeBinding{
+	response := models.Bsf_Mgmt_PcfForUeBinding{
 		Supi:                binding.Supi,
 		Gpsi:                util.PtrToString(binding.Gpsi),
 		PcfForUeFqdn:        util.PtrToString(binding.PcfForUeFqdn),

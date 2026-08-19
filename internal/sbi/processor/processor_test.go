@@ -30,12 +30,12 @@ func TestCreatePCFBinding(t *testing.T) {
 	router.POST("/pcfBindings", processor.CreatePCFBinding)
 
 	// Create test request
-	pcfBinding := models.PcfBinding{
+	pcfBinding := models.Bsf_Mgmt_PcfBinding{
 		Dnn:     "internet",
 		Snssai:  &models.Snssai{Sst: 1, Sd: "010203"},
 		Supi:    "imsi-208930000000001",
 		PcfFqdn: "pcf.free5gc.org",
-		PcfIpEndPoints: []models.IpEndPoint{
+		PcfIpEndPoints: []models.Nrf_NFMgmt_IpEndPoint{
 			{
 				Ipv4Address: "127.0.0.1",
 				Port:        8000,
@@ -60,7 +60,7 @@ func TestCreatePCFBinding(t *testing.T) {
 	// Assert response
 	assert.Equal(t, http.StatusCreated, rr.Code)
 
-	var response models.PcfBinding
+	var response models.Bsf_Mgmt_PcfBinding
 	err = json.Unmarshal(rr.Body.Bytes(), &response)
 	assert.NoError(t, err)
 	assert.Equal(t, "internet", response.Dnn)
@@ -107,7 +107,7 @@ func TestGetPCFBindings(t *testing.T) {
 	// Assert response
 	assert.Equal(t, http.StatusOK, rr.Code)
 
-	var response models.PcfBinding
+	var response models.Bsf_Mgmt_PcfBinding
 	err = json.Unmarshal(rr.Body.Bytes(), &response)
 	assert.NoError(t, err)
 	assert.Equal(t, "internet", response.Dnn)

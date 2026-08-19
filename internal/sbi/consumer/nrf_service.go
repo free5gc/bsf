@@ -12,14 +12,14 @@ import (
 	"github.com/free5gc/bsf/internal/logger"
 	"github.com/free5gc/openapi"
 	"github.com/free5gc/openapi/models"
-	Nnrf_NFManagement "github.com/free5gc/openapi/nrf/NFManagement"
+	Nnrf_NFManagement "github.com/free5gc/openapi/nrf/NFMgmt"
 )
 
-func BuildNFProfile(bsfContext *bsfContext.BSFContext) models.NrfNfManagementNfProfile {
+func BuildNFProfile(bsfContext *bsfContext.BSFContext) models.Nrf_NFMgmt_NFProfile {
 	return bsfContext.GetBsfProfile()
 }
 
-func SendRegisterNFInstance(ctx context.Context) (*models.NrfNfManagementNfProfile, error) {
+func SendRegisterNFInstance(ctx context.Context) (*models.Nrf_NFMgmt_NFProfile, error) {
 	// Set client and set url
 	configuration := Nnrf_NFManagement.NewConfiguration()
 	configuration.SetBasePath(bsfContext.BsfSelf.NrfUri)
@@ -34,8 +34,8 @@ func SendRegisterNFInstance(ctx context.Context) (*models.NrfNfManagementNfProfi
 		nfProfile := BuildNFProfile(bsfContext.BsfSelf)
 
 		request := &Nnrf_NFManagement.RegisterNFInstanceRequest{
-			NfInstanceID:             &bsfContext.BsfSelf.NfId,
-			NrfNfManagementNfProfile: &nfProfile,
+			NfInstanceID: &bsfContext.BsfSelf.NfId,
+			RequestBody:  &nfProfile,
 		}
 
 		res, err := client.NFInstanceIDDocumentApi.RegisterNFInstance(context.TODO(), request)
@@ -61,12 +61,12 @@ func SendRegisterNFInstance(ctx context.Context) (*models.NrfNfManagementNfProfi
 		if res.Location == "" {
 			// NFUpdate
 			logger.ConsLog.Infof("BSF registration to NRF updated")
-			return &res.NrfNfManagementNfProfile, nil
+			return res.Nrf_NFMgmt_NFProfile, nil
 		} else {
 			// NFRegister
 			resourceUri := res.Location
 			logger.ConsLog.Infof("BSF registration to NRF successful, resource: %s", resourceUri)
-			return &res.NrfNfManagementNfProfile, nil
+			return res.Nrf_NFMgmt_NFProfile, nil
 		}
 	}
 }

@@ -21,7 +21,7 @@ import (
 func CreatePCFBinding(c *gin.Context) {
 	logger.ProcLog.Infof("Handle CreatePCFBinding")
 
-	var request models.PcfBinding
+	var request models.Bsf_Mgmt_PcfBinding
 	if err := c.ShouldBindJSON(&request); err != nil {
 		problemDetail := models.ProblemDetails{
 			Status: http.StatusBadRequest,
@@ -116,7 +116,7 @@ func CreatePCFBinding(c *gin.Context) {
 	)
 
 	// Convert back to response format
-	response := models.PcfBinding{
+	response := models.Bsf_Mgmt_PcfBinding{
 		Supi:               util.PtrToString(binding.Supi),
 		Gpsi:               util.PtrToString(binding.Gpsi),
 		Ipv4Addr:           util.PtrToString(binding.Ipv4Addr),
@@ -232,7 +232,7 @@ func GetPCFBindings(c *gin.Context) {
 
 	// Convert first match to response format
 	binding := bindings[0]
-	response := models.PcfBinding{
+	response := models.Bsf_Mgmt_PcfBinding{
 		Supi:               util.PtrToString(binding.Supi),
 		Gpsi:               util.PtrToString(binding.Gpsi),
 		Ipv4Addr:           util.PtrToString(binding.Ipv4Addr),
@@ -296,7 +296,7 @@ func GetIndPCFBinding(c *gin.Context) {
 	}
 
 	// Convert to response format
-	response := models.PcfBinding{
+	response := models.Bsf_Mgmt_PcfBinding{
 		Supi:               util.PtrToString(binding.Supi),
 		Gpsi:               util.PtrToString(binding.Gpsi),
 		Ipv4Addr:           util.PtrToString(binding.Ipv4Addr),
@@ -364,7 +364,7 @@ func UpdateIndPCFBinding(c *gin.Context) {
 
 	bindingId := c.Param("bindingId")
 
-	var patchRequest models.PcfBindingPatch
+	var patchRequest models.Bsf_Mgmt_PcfBindingPatch
 	if err := c.ShouldBindJSON(&patchRequest); err != nil {
 		problemDetail := models.ProblemDetails{
 			Status: http.StatusBadRequest,
@@ -435,7 +435,7 @@ func UpdateIndPCFBinding(c *gin.Context) {
 	)
 
 	// Return updated binding
-	response := models.PcfBinding{
+	response := models.Bsf_Mgmt_PcfBinding{
 		Supi:               util.PtrToString(binding.Supi),
 		Gpsi:               util.PtrToString(binding.Gpsi),
 		Ipv4Addr:           util.PtrToString(binding.Ipv4Addr),

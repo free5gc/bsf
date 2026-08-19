@@ -21,9 +21,9 @@ func PtrToString(s *string) string {
 	return *s
 }
 
-func PtrToBindingLevel(b *models.BindingLevel) models.BindingLevel {
+func PtrToBindingLevel(b *models.Bsf_Mgmt_BindingLevel) models.Bsf_Mgmt_BindingLevel {
 	if b == nil {
-		return models.BindingLevel("")
+		return models.Bsf_Mgmt_BindingLevel("")
 	}
 	return *b
 }
