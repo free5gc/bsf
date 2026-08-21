@@ -41,11 +41,12 @@ type Info struct {
 }
 
 type Configuration struct {
-	BsfName string   `yaml:"bsfName,omitempty"`
-	Sbi     *Sbi     `yaml:"sbi,omitempty"`
-	NrfUri  string   `yaml:"nrfUri,omitempty"`
-	MongoDB *MongoDB `yaml:"mongodb,omitempty"`
-	Metrics *Metrics `yaml:"metrics,omitempty"`
+	BsfName    string   `yaml:"bsfName,omitempty"`
+	Sbi        *Sbi     `yaml:"sbi,omitempty"`
+	NrfUri     string   `yaml:"nrfUri,omitempty"`
+	NrfCertPem string   `yaml:"nrfCertPem,omitempty"`
+	MongoDB    *MongoDB `yaml:"mongodb,omitempty"`
+	Metrics    *Metrics `yaml:"metrics,omitempty"`
 }
 
 type Logger struct {

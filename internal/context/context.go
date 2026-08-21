@@ -18,6 +18,7 @@ import (
 	"github.com/free5gc/bsf/internal/logger"
 	"github.com/free5gc/bsf/pkg/factory"
 	"github.com/free5gc/openapi/models"
+	"github.com/free5gc/openapi/oauth"
 )
 
 var (
@@ -54,15 +55,23 @@ func init() {
 	BsfSelf.ShutdownChannel = make(chan bool, 1)
 }
 
+type NFContext interface {
+	AuthorizationCheck(token string, serviceName models.ServiceName) error
+}
+
+var _ NFContext = &BSFContext{}
+
 type BSFContext struct {
-	mutex        sync.RWMutex
-	NfId         string
-	Name         string
-	UriScheme    string
-	RegisterIPv4 string
-	SBIPort      int
-	BindingIPv4  string
-	NrfUri       string
+	mutex          sync.RWMutex
+	NfId           string
+	Name           string
+	UriScheme      string
+	RegisterIPv4   string
+	SBIPort        int
+	BindingIPv4    string
+	NrfUri         string
+	NrfCertPem     string
+	OAuth2Required bool
 
 	// MongoDB
 	MongoDBName   string
@@ -159,6 +168,16 @@ func (c *BSFContext) GetSelf() *BSFContext {
 	return &bsfContext
 }
 
+func (c *BSFContext) AuthorizationCheck(token string, serviceName models.ServiceName) error {
+	if !c.OAuth2Required {
+		logger.CtxLog.Debugf("BSFContext::AuthorizationCheck: OAuth2 not required\n")
+		return nil
+	}
+
+	logger.CtxLog.Debugf("BSFContext::AuthorizationCheck: token[%s] serviceName[%s]\n", token, serviceName)
+	return oauth.VerifyOAuth(token, string(serviceName), c.NrfCertPem)
+}
+
 func InitBsfContext() {
 	config := factory.BsfConfig
 	if config == nil {
@@ -187,6 +206,8 @@ func InitBsfContext() {
 	} else {
 		logger.CtxLog.Warn("NRF Uri is empty! BSF will not register to NRF")
 	}
+
+	BsfSelf.NrfCertPem = configuration.NrfCertPem
 
 	if configuration.MongoDB == nil {
 		logger.CtxLog.Warn("MongoDB is nil")
