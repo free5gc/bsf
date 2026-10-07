@@ -19,7 +19,7 @@ import (
 func CreateIndividualSubcription(c *gin.Context) {
 	logger.ProcLog.Infof("Handle CreateIndividualSubcription")
 
-	var request models.BsfSubscription
+	var request models.Bsf_Mgmt_BsfSubscription
 	if err := c.ShouldBindJSON(&request); err != nil {
 		problemDetail := models.ProblemDetails{
 			Status: http.StatusBadRequest,
@@ -45,7 +45,7 @@ func CreateIndividualSubcription(c *gin.Context) {
 	subId := bsfContext.BsfSelf.CreateSubscription(subscription)
 
 	// Convert back to response format
-	response := models.BsfSubscriptionResp{
+	response := models.Bsf_Mgmt_BsfSubscriptionResp{
 		Events:            subscription.Events,
 		NotifUri:          subscription.NotifUri,
 		NotifCorreId:      subscription.NotifCorreId,
@@ -67,7 +67,7 @@ func ReplaceIndividualSubcription(c *gin.Context) {
 
 	subId := c.Param("subId")
 
-	var request models.BsfSubscription
+	var request models.Bsf_Mgmt_BsfSubscription
 	if err := c.ShouldBindJSON(&request); err != nil {
 		problemDetail := models.ProblemDetails{
 			Status: http.StatusBadRequest,
@@ -92,29 +92,30 @@ func ReplaceIndividualSubcription(c *gin.Context) {
 		SuppFeat:          util.StringToPtr(request.SuppFeat),
 	}
 
-	if exists {
-		// Update existing subscription
-		bsfContext.BsfSelf.UpdateSubscription(subId, subscription)
-
-		// Return updated subscription
-		response := models.BsfSubscriptionResp{
-			Events:            subscription.Events,
-			NotifUri:          subscription.NotifUri,
-			NotifCorreId:      subscription.NotifCorreId,
-			Supi:              subscription.Supi,
-			Gpsi:              util.PtrToString(subscription.Gpsi),
-			SnssaiDnnPairs:    subscription.SnssaiDnnPairs,
-			AddSnssaiDnnPairs: subscription.AddSnssaiDnnPairs,
-			SuppFeat:          util.PtrToString(subscription.SuppFeat),
+	if !exists {
+		problemDetail := models.ProblemDetails{
+			Status: http.StatusNotFound,
+			Cause:  "RESOURCE_NOT_FOUND",
 		}
-		c.JSON(http.StatusOK, response)
-	} else {
-		// Create new subscription with given ID
-		subscription.SubId = subId
-		bsfContext.BsfSelf.Subscriptions[subId] = subscription
-
-		c.Status(http.StatusNoContent)
+		c.JSON(http.StatusNotFound, problemDetail)
+		return
 	}
+
+	// Update existing subscription
+	bsfContext.BsfSelf.UpdateSubscription(subId, subscription)
+
+	// Return updated subscription
+	response := models.Bsf_Mgmt_BsfSubscriptionResp{
+		Events:            subscription.Events,
+		NotifUri:          subscription.NotifUri,
+		NotifCorreId:      subscription.NotifCorreId,
+		Supi:              subscription.Supi,
+		Gpsi:              util.PtrToString(subscription.Gpsi),
+		SnssaiDnnPairs:    subscription.SnssaiDnnPairs,
+		AddSnssaiDnnPairs: subscription.AddSnssaiDnnPairs,
+		SuppFeat:          util.PtrToString(subscription.SuppFeat),
+	}
+	c.JSON(http.StatusOK, response)
 }
 
 // DeleteIndividualSubcription handles DELETE /subscriptions/{subId}

@@ -1,10 +1,10 @@
 module github.com/free5gc/bsf
 
-go 1.25.5
+go 1.26.2
 
 require (
-	github.com/free5gc/openapi v1.2.3
-	github.com/free5gc/util v1.3.1
+	github.com/free5gc/openapi v1.3.0
+	github.com/free5gc/util v1.4.0
 	github.com/gin-contrib/cors v1.6.0
 	github.com/gin-gonic/gin v1.10.0
 	github.com/google/uuid v1.4.0
@@ -19,6 +19,7 @@ require (
 require github.com/google/go-cmp v0.7.0 // indirect
 
 require (
+	github.com/aead/cmac v0.0.0-20160719120800-7af84192f0b1 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bytedance/sonic v1.11.6 // indirect
 	github.com/bytedance/sonic/loader v0.1.1 // indirect
@@ -28,9 +29,8 @@ require (
 	github.com/cpuguy83/go-md2man/v2 v2.0.7 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
-	github.com/free5gc/aper v1.1.0 // indirect
-	github.com/free5gc/nas v1.2.2 // indirect
-	github.com/free5gc/ngap v1.1.2 // indirect
+	github.com/free5gc/nas v1.2.4-0.20260707083822-348faf940c55 // indirect
+	github.com/free5gc/ngap v1.1.4-0.20260707055048-c26215fe47ef // indirect
 	github.com/gabriel-vasile/mimetype v1.4.3 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
 	github.com/go-logr/logr v1.4.1 // indirect
@@ -74,12 +74,12 @@ require (
 	go.opentelemetry.io/otel/metric v1.24.0 // indirect
 	go.opentelemetry.io/otel/trace v1.24.0 // indirect
 	golang.org/x/arch v0.8.0 // indirect
-	golang.org/x/crypto v0.45.0 // indirect
-	golang.org/x/net v0.47.0 // indirect
+	golang.org/x/crypto v0.51.0 // indirect
+	golang.org/x/net v0.55.0 // indirect
 	golang.org/x/oauth2 v0.30.0 // indirect
-	golang.org/x/sync v0.18.0 // indirect
-	golang.org/x/sys v0.38.0 // indirect
-	golang.org/x/text v0.31.0 // indirect
+	golang.org/x/sync v0.20.0 // indirect
+	golang.org/x/sys v0.45.0 // indirect
+	golang.org/x/text v0.37.0 // indirect
 	google.golang.org/protobuf v1.36.6 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
