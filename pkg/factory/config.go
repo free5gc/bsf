@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"sync"
+	"time"
 
 	"gopkg.in/yaml.v2"
 
@@ -41,11 +42,12 @@ type Info struct {
 }
 
 type Configuration struct {
-	BsfName string   `yaml:"bsfName,omitempty"`
-	Sbi     *Sbi     `yaml:"sbi,omitempty"`
-	NrfUri  string   `yaml:"nrfUri,omitempty"`
-	MongoDB *MongoDB `yaml:"mongodb,omitempty"`
-	Metrics *Metrics `yaml:"metrics,omitempty"`
+	IdleTimeout *time.Duration `yaml:"idleTimeout,omitempty" valid:"optional"`
+	BsfName     string         `yaml:"bsfName,omitempty"`
+	Sbi         *Sbi           `yaml:"sbi,omitempty"`
+	NrfUri      string         `yaml:"nrfUri,omitempty"`
+	MongoDB     *MongoDB       `yaml:"mongodb,omitempty"`
+	Metrics     *Metrics       `yaml:"metrics,omitempty"`
 }
 
 type Logger struct {
@@ -210,4 +212,15 @@ func CheckConfigVersion() error {
 	logger.CfgLog.Infof("BSF config version [%s]", currentVersion)
 
 	return nil
+}
+
+// GetIdleTimeout returns the HTTP server idle timeout. Omitted values preserve
+// the previous 1ms timeout; an explicit zero disables the timeout.
+func (c *Config) GetIdleTimeout() time.Duration {
+	c.RLock()
+	defer c.RUnlock()
+	if c.Configuration == nil || c.Configuration.IdleTimeout == nil {
+		return time.Millisecond
+	}
+	return *c.Configuration.IdleTimeout
 }

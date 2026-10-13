@@ -90,7 +90,7 @@ func NewApp(ctx context.Context, cfg *factory.Config, tlsKeyLogPath string) (*Bs
 
 		var metricsErr error
 		if bsf.metricsServer, metricsErr = metrics.NewServer(
-			getInitMetrics(cfg, features, customMetrics), tlsKeyLogPath, logger.MainLog); metricsErr != nil {
+			getInitMetrics(cfg, features, customMetrics), tlsKeyLogPath, logger.MainLog, cfg.GetIdleTimeout()); metricsErr != nil {
 			logger.MainLog.Warnf("Failed to create metrics server: %+v", metricsErr)
 		}
 	}
@@ -246,6 +246,7 @@ func (a *BsfApp) Start() {
 	logger.MainLog.Infof("BSF SBI Server started on %s", bindAddr)
 
 	a.server = &http.Server{
+		IdleTimeout:    a.Config().GetIdleTimeout(),
 		Addr:           bindAddr,
 		Handler:        router,
 		ReadTimeout:    10 * time.Second,
