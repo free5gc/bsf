@@ -10,6 +10,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/free5gc/openapi"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus"
@@ -54,6 +55,9 @@ type BsfApp struct {
 }
 
 func NewApp(ctx context.Context, cfg *factory.Config, tlsKeyLogPath string) (*BsfApp, error) {
+	if err := openapi.ConfigureHTTP2Clients(cfg.GetReadIdleTimeout(), cfg.GetPingTimeout()); err != nil {
+		return nil, err
+	}
 	bsf := &BsfApp{
 		cfg:           cfg,
 		tlsKeyLogPath: tlsKeyLogPath,
