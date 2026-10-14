@@ -10,7 +10,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/free5gc/openapi"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus"
@@ -24,6 +23,7 @@ import (
 	"github.com/free5gc/bsf/internal/sbi/processor"
 	"github.com/free5gc/bsf/pkg/app"
 	"github.com/free5gc/bsf/pkg/factory"
+	"github.com/free5gc/openapi"
 	"github.com/free5gc/util/metrics"
 	sbiMetrics "github.com/free5gc/util/metrics/sbi"
 	"github.com/free5gc/util/metrics/utils"
@@ -94,7 +94,8 @@ func NewApp(ctx context.Context, cfg *factory.Config, tlsKeyLogPath string) (*Bs
 
 		var metricsErr error
 		if bsf.metricsServer, metricsErr = metrics.NewServer(
-			getInitMetrics(cfg, features, customMetrics), tlsKeyLogPath, logger.MainLog, cfg.GetIdleTimeout()); metricsErr != nil {
+			getInitMetrics(cfg, features, customMetrics), tlsKeyLogPath, logger.MainLog, cfg.GetIdleTimeout(),
+		); metricsErr != nil {
 			logger.MainLog.Warnf("Failed to create metrics server: %+v", metricsErr)
 		}
 	}
