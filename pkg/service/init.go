@@ -4,14 +4,10 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"net/http"
 	"os"
 	"runtime/debug"
 	"sync"
-	"time"
 
-	"github.com/gin-contrib/cors"
-	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sirupsen/logrus"
 
@@ -41,17 +37,16 @@ var BSF BsfAppInterface
 type BsfApp struct {
 	BsfAppInterface
 
-	cfg           *factory.Config
-	bsfCtx        *bsfContext.BSFContext
-	ctx           context.Context
-	cancel        context.CancelFunc
-	wg            sync.WaitGroup
-	tlsKeyLogPath string
+	cfg    *factory.Config
+	bsfCtx *bsfContext.BSFContext
+	ctx    context.Context
+	cancel context.CancelFunc
+	wg     sync.WaitGroup
 
 	processor     *processor.Processor
 	consumer      *consumer.Consumer
 	metricsServer *metrics.Server
-	server        *http.Server
+	sbiServer     *sbi.Server
 }
 
 func NewApp(ctx context.Context, cfg *factory.Config, tlsKeyLogPath string) (*BsfApp, error) {
@@ -59,8 +54,7 @@ func NewApp(ctx context.Context, cfg *factory.Config, tlsKeyLogPath string) (*Bs
 		return nil, err
 	}
 	bsf := &BsfApp{
-		cfg:           cfg,
-		tlsKeyLogPath: tlsKeyLogPath,
+		cfg: cfg,
 	}
 	bsf.SetLogEnable(cfg.Logger.Enable)
 	bsf.SetLogLevel(cfg.Logger.Level)
@@ -80,6 +74,11 @@ func NewApp(ctx context.Context, cfg *factory.Config, tlsKeyLogPath string) (*Bs
 	// Initialize processor singleton
 	if bsf.processor, err = processor.NewProcessor(bsf); err != nil {
 		return nil, fmt.Errorf("failed to initialize processor: %w", err)
+	}
+
+	if bsf.sbiServer, err = sbi.NewServer(bsf, tlsKeyLogPath); err != nil {
+		bsf.cancel()
+		return nil, fmt.Errorf("failed to initialize SBI server: %w", err)
 	}
 
 	// Set BSF context configuration
@@ -213,9 +212,7 @@ func (a *BsfApp) Start() {
 
 	// Start metrics server if enabled
 	if a.cfg.AreMetricsEnabled() && a.metricsServer != nil {
-		go func() {
-			a.metricsServer.Run(&a.wg)
-		}()
+		a.metricsServer.Run(&a.wg)
 		logger.MainLog.Infof("BSF metrics server enabled on %s://%s",
 			a.cfg.GetMetricsScheme(), a.cfg.GetMetricsBindingAddr())
 	}
@@ -229,76 +226,10 @@ func (a *BsfApp) Start() {
 		}
 	}()
 
-	// Start SBI server
-	router := gin.Default()
-	sbi.AddService(router)
-
-	// Add CORS
-	router.Use(cors.New(cors.Config{
-		AllowMethods: []string{"GET", "POST", "OPTIONS", "PUT", "PATCH", "DELETE"},
-		AllowHeaders: []string{
-			"Origin", "Content-Length", "Content-Type", "User-Agent",
-			"Referrer", "Host", "Token", "X-Requested-With",
-		},
-		ExposeHeaders:    []string{"Content-Length"},
-		AllowCredentials: true,
-		AllowAllOrigins:  false,
-		AllowOriginFunc:  func(origin string) bool { return true },
-		MaxAge:           86400,
-	}))
-
-	bindAddr := fmt.Sprintf("%s:%d", a.cfg.Configuration.Sbi.BindingIPv4, a.cfg.Configuration.Sbi.Port)
-	logger.MainLog.Infof("BSF SBI Server started on %s", bindAddr)
-
-	a.server = &http.Server{
-		IdleTimeout:    a.Config().GetIdleTimeout(),
-		Addr:           bindAddr,
-		Handler:        router,
-		ReadTimeout:    10 * time.Second,
-		WriteTimeout:   10 * time.Second,
-		MaxHeaderBytes: 1 << 20,
-	}
-
-	// Start server and wait for it to finish
-	if err := a.runServer(); err != nil {
+	if err := a.sbiServer.Run(a.ctx, &a.wg); err != nil {
 		logger.MainLog.Fatalf("Run SBI server failed: %+v", err)
 	}
 	a.WaitRoutineStopped()
-}
-
-func (a *BsfApp) runServer() error {
-	serverErr := make(chan error, 1)
-	go func() {
-		var err error
-		switch a.cfg.Configuration.Sbi.Scheme {
-		case "http":
-			err = a.server.ListenAndServe()
-		case "https":
-			err = a.server.ListenAndServeTLS(
-				a.cfg.Configuration.Sbi.Tls.Pem,
-				a.cfg.Configuration.Sbi.Tls.Key,
-			)
-		default:
-			err = fmt.Errorf("unsupported scheme: %s", a.cfg.Configuration.Sbi.Scheme)
-		}
-		// Send error to channel (including ErrServerClosed for testing)
-		if err != nil {
-			serverErr <- err
-		}
-	}()
-
-	// Wait for context cancellation or server error
-	select {
-	case <-a.ctx.Done():
-		// Context canceled, normal shutdown
-		return nil
-	case err := <-serverErr:
-		// Server error (could be ErrServerClosed after shutdown)
-		if err == http.ErrServerClosed {
-			return nil
-		}
-		return err
-	}
 }
 
 // Used in BSF planned removal procedure
@@ -345,15 +276,8 @@ func (a *BsfApp) CallServerStop() {
 		a.bsfCtx.StopCleanupRoutine()
 	}
 
-	// Shutdown SBI server if running
-	if a.server != nil {
-		// Use a separate context with timeout for shutdown
-		shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer shutdownCancel()
-
-		if err := a.server.Shutdown(shutdownCtx); err != nil {
-			logger.MainLog.Errorf("Error shutting down SBI server: %+v", err)
-		}
+	if a.sbiServer != nil {
+		a.sbiServer.Shutdown()
 	}
 
 	// Stop metrics server
