@@ -42,6 +42,8 @@ type BsfApp struct {
 	ctx    context.Context
 	cancel context.CancelFunc
 	wg     sync.WaitGroup
+	// Closed once the startup NRF registration and any heartbeat Start have returned.
+	registerDone chan struct{}
 
 	processor     *processor.Processor
 	consumer      *consumer.Consumer
@@ -208,6 +210,9 @@ func (a *BsfApp) Start() {
 	// Start cleanup routine for expired and inactive bindings
 	a.bsfCtx.StartCleanupRoutine()
 
+	// Set before the shutdown listener can read it.
+	a.registerDone = make(chan struct{})
+
 	// Start listening for shutdown events
 	a.wg.Add(1)
 	go a.listenShutdownEvent()
@@ -221,10 +226,14 @@ func (a *BsfApp) Start() {
 
 	// Register with NRF - moved to consumer
 	go func() {
+		defer close(a.registerDone)
 		if err := a.consumer.RegisterWithNRF(a.ctx); err != nil {
 			logger.MainLog.Errorf("BSF register to NRF Error: %+v", err)
 		} else {
 			logger.MainLog.Infof("BSF successfully registered with NRF")
+			// Only a registered profile has something to keep alive. The shutdown listener still holds a.wg here,
+			// so the heartbeat can join it.
+			a.consumer.StartHeartbeat(a.ctx, &a.wg)
 		}
 	}()
 
@@ -302,6 +311,11 @@ func (a *BsfApp) terminateProcedure() {
 
 	// Deregister from NRF using consumer
 	if a.consumer != nil {
+		// No registration PUT or heartbeat PATCH may land after the deregistration. Both honor a.ctx, which is
+		// already canceled here.
+		<-a.registerDone
+		a.consumer.WaitHeartbeatStopped()
+
 		if err := a.consumer.DeregisterWithNRF(); err != nil {
 			logger.MainLog.Errorf("BSF deregister from NRF Error: %+v", err)
 			// Don't return error here as termination should continue

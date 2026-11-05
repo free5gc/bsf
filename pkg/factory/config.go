@@ -13,6 +13,7 @@ import (
 	"gopkg.in/yaml.v2"
 
 	"github.com/free5gc/bsf/internal/logger"
+	"github.com/free5gc/util/nfheartbeat"
 )
 
 const (
@@ -50,6 +51,9 @@ type Configuration struct {
 	NrfUri          string         `yaml:"nrfUri,omitempty"`
 	MongoDB         *MongoDB       `yaml:"mongodb,omitempty"`
 	Metrics         *Metrics       `yaml:"metrics,omitempty"`
+	// NfHeartBeatTimer is the fallback heartbeat interval in seconds, from 1 to
+	// 3600 as the NRF accepts. The interval the NRF assigns always wins.
+	NfHeartBeatTimer int32 `yaml:"nfHeartBeatTimer,omitempty"`
 }
 
 type Logger struct {
@@ -258,4 +262,15 @@ func (c *Config) GetTLSVerify() bool {
 	defer c.RUnlock()
 	return c.Configuration != nil && c.Configuration.Sbi != nil &&
 		c.Configuration.Sbi.Tls != nil && c.Configuration.Sbi.Tls.Verify
+}
+
+// GetNfHeartBeatTimer returns the fallback heartbeat interval in seconds. The BSF config is not validated, so a
+// value above the NRF maximum is capped here.
+func (c *Config) GetNfHeartBeatTimer() int32 {
+	c.RLock()
+	defer c.RUnlock()
+	if c.Configuration == nil || c.Configuration.NfHeartBeatTimer <= 0 {
+		return nfheartbeat.DefaultTimer
+	}
+	return min(c.Configuration.NfHeartBeatTimer, nfheartbeat.MaxTimer)
 }
