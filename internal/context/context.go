@@ -18,6 +18,7 @@ import (
 	"github.com/free5gc/bsf/internal/logger"
 	"github.com/free5gc/bsf/pkg/factory"
 	"github.com/free5gc/openapi/models"
+	"github.com/free5gc/util/serviceuri"
 )
 
 var (
@@ -955,12 +956,15 @@ func mbsSessionIdEquals(id1, id2 *models.MbsSessionId) bool {
 
 // Get BSF NF Profile
 func (c *BSFContext) GetBsfProfile() models.Nrf_NFMgmt_NFProfile {
+	addr := serviceuri.NewAddressing(c.RegisterIPv4)
 	nfProfile := models.Nrf_NFMgmt_NFProfile{
 		NfInstanceId:  c.NfId,
 		NfType:        models.Nrf_NFMgmt_NFType_BSF,
 		NfStatus:      models.Nrf_NFMgmt_NFStatus_REGISTERED,
 		PlmnList:      []models.PlmnId{{Mcc: "208", Mnc: "93"}}, // Default PLMN
-		Ipv4Addresses: []string{c.RegisterIPv4},
+		Fqdn:          addr.FQDN,
+		Ipv4Addresses: addr.IPv4Addresses,
+		Ipv6Addresses: addr.IPv6Addresses,
 		NfServices:    []models.Nrf_NFMgmt_NFService{},
 	}
 
@@ -973,11 +977,8 @@ func (c *BSFContext) GetBsfProfile() models.Nrf_NFMgmt_NFProfile {
 		}},
 		Scheme:          models.UriScheme(c.UriScheme),
 		NfServiceStatus: models.Nrf_NFMgmt_NFServiceStatus_REGISTERED,
-		IpEndPoints: []models.Nrf_NFMgmt_IpEndPoint{{
-			Ipv4Address: c.RegisterIPv4,
-			Port:        int32(c.SBIPort),
-		}},
-		ApiPrefix: fmt.Sprintf("%s://%s:%d", c.UriScheme, c.RegisterIPv4, c.SBIPort),
+		Fqdn:            addr.FQDN,
+		IpEndPoints:     addr.IpEndPoints(int32(c.SBIPort)),
 	}
 
 	nfProfile.NfServices = append(nfProfile.NfServices, bsfMgmtService)
