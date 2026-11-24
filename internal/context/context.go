@@ -7,6 +7,7 @@ package context
 import (
 	"context"
 	"fmt"
+	"slices"
 	"sync"
 	"time"
 
@@ -64,6 +65,7 @@ type BSFContext struct {
 	SBIPort      int
 	BindingIPv4  string
 	NrfUri       string
+	PlmnList     []models.PlmnId
 
 	// MongoDB
 	MongoDBName   string
@@ -170,6 +172,7 @@ func InitBsfContext() {
 	logger.CtxLog.Infof("bsfconfig Info: Version[%s] Description[%s]", config.Info.Version, config.Info.Description)
 
 	configuration := config.Configuration
+	BsfSelf.PlmnList = config.GetPlmnList()
 	if configuration.Sbi == nil {
 		logger.CtxLog.Errorln("Configuration needs \"sbi\" value")
 		return
@@ -961,7 +964,7 @@ func (c *BSFContext) GetBsfProfile() models.Nrf_NFMgmt_NFProfile {
 		NfInstanceId:  c.NfId,
 		NfType:        models.Nrf_NFMgmt_NFType_BSF,
 		NfStatus:      models.Nrf_NFMgmt_NFStatus_REGISTERED,
-		PlmnList:      []models.PlmnId{{Mcc: "208", Mnc: "93"}}, // Default PLMN
+		PlmnList:      slices.Clone(c.PlmnList),
 		Fqdn:          addr.FQDN,
 		Ipv4Addresses: addr.IPv4Addresses,
 		Ipv6Addresses: addr.IPv6Addresses,
