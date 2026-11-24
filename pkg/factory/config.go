@@ -7,12 +7,15 @@ package factory
 import (
 	"fmt"
 	"os"
+	"regexp"
+	"slices"
 	"sync"
 	"time"
 
 	"gopkg.in/yaml.v2"
 
 	"github.com/free5gc/bsf/internal/logger"
+	"github.com/free5gc/openapi/models"
 	"github.com/free5gc/util/nfheartbeat"
 )
 
@@ -51,6 +54,8 @@ type Configuration struct {
 	NrfUri          string         `yaml:"nrfUri,omitempty"`
 	MongoDB         *MongoDB       `yaml:"mongodb,omitempty"`
 	Metrics         *Metrics       `yaml:"metrics,omitempty"`
+	// PlmnList advertises the PLMNs served by this BSF. Omission keeps 208/93.
+	PlmnList []models.PlmnId `yaml:"plmnList,omitempty"`
 	// NfHeartBeatTimer is the fallback heartbeat interval in seconds, from 1 to
 	// 3600 as the NRF accepts. The interval the NRF assigns always wins.
 	NfHeartBeatTimer int32 `yaml:"nfHeartBeatTimer,omitempty"`
@@ -193,6 +198,7 @@ func (c *Config) SetLogReportCaller(reportCaller bool) {
 }
 
 func ReadConfig(cfgPath string) (*Config, error) {
+	var cfg Config
 	if cfgPath == "" {
 		cfgPath = BsfDefaultConfigPath
 	}
@@ -201,12 +207,45 @@ func ReadConfig(cfgPath string) (*Config, error) {
 		return nil, fmt.Errorf("[Configuration] %s: %+v", cfgPath, err)
 	} else {
 		logger.CfgLog.Infof("Read config from [%s]", cfgPath)
-		if yamlErr := yaml.Unmarshal(content, &BsfConfig); yamlErr != nil {
+		if yamlErr := yaml.Unmarshal(content, &cfg); yamlErr != nil {
 			return nil, fmt.Errorf("[Configuration] %s: %+v", cfgPath, yamlErr)
 		}
 	}
 
+	if cfg.Configuration != nil {
+		if err := cfg.Configuration.validatePlmnList(); err != nil {
+			return nil, fmt.Errorf("[Configuration] %s: %w", cfgPath, err)
+		}
+	}
+	BsfConfig = &cfg
 	return BsfConfig, nil
+}
+
+var (
+	mccPattern = regexp.MustCompile(`^[0-9]{3}$`)
+	mncPattern = regexp.MustCompile(`^[0-9]{2,3}$`)
+)
+
+func (c *Configuration) validatePlmnList() error {
+	if c.PlmnList != nil && len(c.PlmnList) == 0 {
+		return fmt.Errorf("configuration.plmnList must not be empty; omit it to use 208/93")
+	}
+	for i, p := range c.PlmnList {
+		if !mccPattern.MatchString(p.Mcc) || !mncPattern.MatchString(p.Mnc) {
+			return fmt.Errorf("configuration.plmnList[%d]: mcc must be 3 digits and mnc must be 2 or 3 digits", i)
+		}
+	}
+	return nil
+}
+
+// GetPlmnList returns a copy of the NRF registration PLMNs, preserving the legacy default when omitted.
+func (c *Config) GetPlmnList() []models.PlmnId {
+	c.RLock()
+	defer c.RUnlock()
+	if c.Configuration != nil && c.Configuration.PlmnList != nil {
+		return slices.Clone(c.Configuration.PlmnList)
+	}
+	return []models.PlmnId{{Mcc: "208", Mnc: "93"}}
 }
 
 func CheckConfigVersion() error {
