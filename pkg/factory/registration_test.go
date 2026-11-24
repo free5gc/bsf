@@ -20,8 +20,11 @@ func TestReadConfigPlmnList(t *testing.T) {
 		want        []models.PlmnId
 		wantErr     bool
 	}{
-		{"custom multiple PLMNs", "[{mcc: '001', mnc: '01'}, {mcc: '001', mnc: '001'}]",
-			[]models.PlmnId{{Mcc: "001", Mnc: "01"}, {Mcc: "001", Mnc: "001"}}, false},
+		{
+			"custom multiple PLMNs", "[{mcc: '001', mnc: '01'}, {mcc: '001', mnc: '001'}]",
+			[]models.PlmnId{{Mcc: "001", Mnc: "01"}, {Mcc: "001", Mnc: "001"}},
+			false,
+		},
 		{"omitted after custom config restores default", "", defaults, false},
 		{"null keeps default", "null", defaults, false},
 		{"empty list", "[]", nil, true},
